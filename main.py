@@ -7,8 +7,8 @@ import requests
 import json
 
 # Set API Keys (use environment variables for security)
-openai.api_key = os.getenv("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")  # Set your OpenAI API key
-elevenlabs_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))  # Initialize ElevenLabs client
+openai.api_key = "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"  # Set your OpenAI API key
+elevenlabs_client = ElevenLabs(api_key=os.getenv("sk_9bf875099506fdac642e0a40d231d147f337c2c3cfbed9fa"))  # Initialize ElevenLabs client
 
 # 1. Story Generation System
 def generate_base_story(theme, age_range, learning_style):
@@ -19,15 +19,15 @@ def generate_base_story(theme, age_range, learning_style):
     Structure the story with clear adaptation points marked with [ADAPT].
     Include sensory details marked with [SENSORY].
     """
-    response = openai.Chat.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello, who won the World Series in 2020?"}
+            {"role": "system", "content": "You are a creative children's story writer."},
+            {"role": "user", "content": prompt}
         ]
     )
+    return response["choices"][0]["message"]["content"]
 
-    return response['choices'][0]['message']['content']
 
 # 2. Story Adaptation System
 def adapt_for_learning_style(story, style):
