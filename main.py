@@ -8,7 +8,7 @@ import json
 
 # Set API Keys (use environment variables for security)
 openai.api_key = "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"  # Set your OpenAI API key
-elevenlabs_client = ElevenLabs(api_key=os.getenv("sk_9bf875099506fdac642e0a40d231d147f337c2c3cfbed9fa"))  # Initialize ElevenLabs client
+elevenlabs_client = ElevenLabs(api_key="sk_9bf875099506fdac642e0a40d231d147f337c2c3cfbed9fa") #new
 
 # 1. Story Generation System
 def generate_base_story(theme, age_range, learning_style):
@@ -55,14 +55,18 @@ def generate_audio(text):
     """Generate audio narration using ElevenLabs."""
     audio = elevenlabs_client.generate(
         text=text,
-        voice="Bella",  # Example child-friendly voice
+        voice="Rachel",  # Replace 'Rachel' with an available voice
         model="eleven_monolingual_v1"
     )
-    # Save audio to a file for Streamlit
+
+    # Save audio to a file
     audio_path = "story_audio.mp3"
     with open(audio_path, "wb") as f:
-        f.write(audio)
+        for chunk in audio:  # Iterate through the generator and write to the file
+            f.write(chunk)
     return audio_path
+
+
 
 # 4. Main Function to Create Story
 def create_adaptive_story(theme, age_range, learning_style):
