@@ -15,7 +15,7 @@ def generate_base_story(theme, age_range, learning_style):
     """Generate the initial story with adaptable elements."""
     prompt = f"""
     Create a children's story about {theme} for ages {age_range}.
-    Include elements suitable for learning style.
+    Include elements suitable for {learning_style} learning style.
     Structure the story with clear adaptation points marked with [ADAPT].
     Include sensory details marked with [SENSORY].
     """
@@ -97,7 +97,7 @@ def create_web_interface():
     # Input controls
     theme = st.text_input("Story Theme", "garden adventure")
     age_range = st.selectbox("Age Range", ["3-5", "6-8", "9-11"])
-    # learning_style = st.selectbox("Learning Style", ["Visual", "Auditory", "Kinesthetic"])
+    learning_style = st.selectbox("Learning Style", ["Visual", "Auditory", "Kinesthetic"])
 
     # Fetch available voices (excluding Bella)
     try:
@@ -117,11 +117,12 @@ def create_web_interface():
 
         st.write("### Illustration")
         if story_package["image"]:
-            st.image(story_package["image"], caption="Generated Illustration", use_column_width=True)
+            st.image(story_package["image"], caption="Generated Illustration", use_container_width=True)
 
         st.write("### Audio Narration")
         if story_package["audio"]:
             st.audio(story_package["audio"])
+
 
 # Entry Point
 if __name__ == "__main__":
