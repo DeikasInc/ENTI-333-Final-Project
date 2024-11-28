@@ -14,10 +14,37 @@ elevenlabs_client = ElevenLabs(api_key="sk_c9bbdeb7ee4502ffe54f997529c49b67c9a69
 def generate_base_story(theme, age_range, learning_style):
     """Generate the initial story with adaptable elements."""
     prompt = f"""
-    Create a children's story about {theme} for ages {age_range}.
-    Include elements suitable for {learning_style} learning style.
-    Structure the story with clear adaptation points marked with [ADAPT].
-    Include sensory details marked with [SENSORY].
+    Create a children's story based on the theme: {theme}.  
+
+  
+
+Tailor the story for the selected age group: {age_range}. 
+
+- For ages 3-5: Use simple sentences, no paragraphs, larger text format, and include repetition or rhyming to support comprehension. Keep the story short (100-150 words). 
+
+- For ages 5-7: Introduce short paragraphs, a clear beginning, middle, and end, and use a slightly larger font. Add engaging dialogue or questions to involve the child. 
+
+- For ages 7-9: Add richer vocabulary, more detailed descriptions, and multi-paragraph storytelling with an easy-to-follow plot.  
+
+- For ages 9-11: Include complex sentences, imaginative world-building, and relatable themes that foster critical thinking and creativity. 
+
+  
+
+Customize the story for the chosen learning style: {learning_style}. 
+
+- For visual learners: Incorporate emojis, visual descriptions, and exclamations to stimulate imagination. For example: "🌟 The stars twinkled brightly in the night sky!" Use vivid imagery to enhance engagement. 
+
+- For auditory learners: Focus on rhythm, rhyme, and onomatopoeia. Use sound-related cues like "BAM!" or "whoosh" to make the story engaging. Structure sentences to flow naturally when read aloud. 
+
+- For kinesthetic learners: Include action-oriented descriptions and prompts for interactive engagement, such as "Clap your hands when the hero cheers!" or "Pretend to jump over the log like the character!" 
+
+  
+
+Ensure the story includes a clear moral or learning outcome to foster both entertainment and education. 
+
+  
+
+Output the story in a format optimized for the age group and learning style, including spacing, layout, and interactivity when applicable. 
     """
     response = openai.ChatCompletion.create(
         model="gpt-4",
@@ -52,7 +79,8 @@ def adapt_for_learning_style(story, style):
 # 3. Image Generation
 def generate_images(story):
     """Generate images for the story using DALL·E."""
-    prompt = f"Generate an illustration for the following children's story scene: {story[:200]}"
+    first_scene = story.split('.')[0]  # Get the first sentence for better context
+    prompt = f"Generate a bright, colorful illustration for this scene: {first_scene}"    
     response = openai.Image.create(
         prompt=prompt,
         n=1,
@@ -117,7 +145,7 @@ def create_web_interface():
 
         st.write("### Illustration")
         if story_package["image"]:
-            st.image(story_package["image"], caption="Generated Illustration", use_container_width=True)
+            st.image(story_package["image"], caption="A magical scene from your story", use_container_width=True)
 
         st.write("### Audio Narration")
         if story_package["audio"]:
