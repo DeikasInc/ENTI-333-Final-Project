@@ -1,14 +1,17 @@
-import os
 import openai
 from elevenlabs import ElevenLabs
 import streamlit as st
 from PIL import Image
 import requests
-import json
+import time
+import os
 
 # Set API Keys
 openai.api_key = "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"  # Replace with your OpenAI API key
-elevenlabs_client = ElevenLabs(api_key="sk_c9bbdeb7ee4502ffe54f997529c49b67c9a69cf998cd8c80")  # Replace with your ElevenLabs API key
+elevenlabs_client = ElevenLabs(api_key="sk_c9bbdeb7ee4502ffe54f997529c49b67c9a69cf998cd8c80") 
+# 1. Story Generation System
+image_dir = "generated_images"
+os.makedirs(image_dir, exist_ok=True)
 
 # 1. Story Generation System
 def generate_base_story(theme, age_range, learning_style):
@@ -16,35 +19,11 @@ def generate_base_story(theme, age_range, learning_style):
     prompt = f"""
     Create a children's story based on the theme: {theme}.  
 
-  
+    Tailor the story for the selected age group: {age_range}. 
 
-Tailor the story for the selected age group: {age_range}. 
+    Customize the story for the chosen learning style: {learning_style}. 
 
-- For ages 3-5: Use simple sentences, no paragraphs, larger text format, and include repetition or rhyming to support comprehension. Keep the story short (100-150 words). 
-
-- For ages 5-7: Introduce short paragraphs, a clear beginning, middle, and end, and use a slightly larger font. Add engaging dialogue or questions to involve the child. 
-
-- For ages 7-9: Add richer vocabulary, more detailed descriptions, and multi-paragraph storytelling with an easy-to-follow plot.  
-
-- For ages 9-11: Include complex sentences, imaginative world-building, and relatable themes that foster critical thinking and creativity. 
-
-  
-
-Customize the story for the chosen learning style: {learning_style}. 
-
-- For visual learners: Incorporate emojis, visual descriptions, and exclamations to stimulate imagination. For example: "🌟 The stars twinkled brightly in the night sky!" Use vivid imagery to enhance engagement. 
-
-- For auditory learners: Focus on rhythm, rhyme, and onomatopoeia. Use sound-related cues like "BAM!" or "whoosh" to make the story engaging. Structure sentences to flow naturally when read aloud. 
-
-- For kinesthetic learners: Include action-oriented descriptions and prompts for interactive engagement, such as "Clap your hands when the hero cheers!" or "Pretend to jump over the log like the character!" 
-
-  
-
-Ensure the story includes a clear moral or learning outcome to foster both entertainment and education. 
-
-  
-
-Output the story in a format optimized for the age group and learning style, including spacing, layout, and interactivity when applicable. 
+    Ensure the story includes a clear moral or learning outcome to foster both entertainment and education.
     """
     response = openai.ChatCompletion.create(
         model="gpt-4",
@@ -55,103 +34,145 @@ Output the story in a format optimized for the age group and learning style, inc
     )
     return response["choices"][0]["message"]["content"]
 
-# 2. Story Adaptation System
-def adapt_for_learning_style(story, style):
-    """Adapt the base story for specific learning styles."""
-    adaptation_prompt = f"""
-    Adapt this story for {style} learners.  
-    If visual: Enhance visual descriptions and add image cues.
-    If auditory: Add sound effects and rhythmic elements.
-    If kinesthetic: Add interactive moments and movement prompts.
+# 2. Image Generation with Saving
+image_dir = "generated_images"
+os.makedirs(image_dir, exist_ok=True)
 
-    Original story:
-    {story}
-    """
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are an educational content adapter."},
-            {"role": "user", "content": adaptation_prompt}
-        ]
-    )
-    return response['choices'][0]['message']['content']
-
-# 3. Image Generation
 def generate_images(story):
-    """Generate images for the story using DALL·E."""
-    first_scene = story.split('.')[0]  # Get the first sentence for better context
-    prompt = f"Generate a bright, colorful illustration for this scene: {first_scene}"    
-    response = openai.Image.create(
-        prompt=prompt,
-        n=1,
-        size="512x512"
-    )
-    image_url = response['data'][0]['url']
-    return image_url
+    """
+    Generate and save an image for the story using DALL·E API and binary response format.
+    """
+    # Extract a meaningful description from the story
+    first_scene = story.split('.')[0]
+    prompt = f"Generate a bright, colorful illustration for this children's story scene: {first_scene}"
 
-# 4. Audio Generation
-def generate_audio(text, voice):
+    try:
+        # Call the DALL·E API to generate an image
+        generation_response = openai.Image.create(
+            model="image-alpha-001",  # Explicitly specify the DALL·E model
+            prompt=prompt,  # Provide the prompt for the image generation
+            n=1,  # Number of images to generate
+            size="1024x1024",  # Specify the image size
+            response_format="b64_json"  # Request binary response in base64 format
+        )
+
+        # Extract the base64 image data
+        b64_image_data = generation_response["data"][0]["b64_json"]
+
+        # Decode and save the image locally
+        generated_image_name = "generated_image.png"
+        generated_image_filepath = os.path.join(image_dir, generated_image_name)
+
+        with open(generated_image_filepath, "wb") as image_file:
+            image_file.write(bytearray.fromhex(b64_image_data))
+
+        return generated_image_filepath  # Return the path of the saved image
+
+    except openai.error.OpenAIError as e:
+        # Handle errors returned by the OpenAI API
+        print(f"OpenAI API error: {e}")
+        return None
+    except Exception as e:
+        # Handle general errors
+        print(f"An error occurred: {e}")
+        return None
+    
+# 3. Audio Generation
+def generate_audio(text):
     """Generate audio narration using ElevenLabs."""
     audio = elevenlabs_client.generate(
         text=text,
-        voice=voice,  # Voice selected by user
+        voice="Rachel",  # Default voice
         model="eleven_monolingual_v1"
     )
-
-    # Save audio to a file
     audio_path = "story_audio.mp3"
     with open(audio_path, "wb") as f:
-        for chunk in audio:  # Iterate through the generator and write to the file
+        for chunk in audio:
             f.write(chunk)
     return audio_path
 
-# 5. Main Function to Create Story
-def create_adaptive_story(theme, age_range, learning_style, voice):
+# 4. Main Function to Create Story
+def create_adaptive_story(theme, age_range, learning_style):
     """Main function to create a complete adaptive story."""
     base_story = generate_base_story(theme, age_range, learning_style)
-    adapted_story = adapt_for_learning_style(base_story, learning_style)
-    audio = generate_audio(adapted_story, voice)
-    image_url = generate_images(adapted_story)
+    audio = generate_audio(base_story)
+    image_path = generate_images(base_story)
     return {
-        "text": adapted_story,
+        "text": base_story,
         "audio": audio,
-        "image": image_url
+        "image": image_path
     }
 
-# 6. Streamlit Web Interface
+# 5. Streamlit Web Interface
 def create_web_interface():
-    st.title("AI Storyteller's Companion")
+    # Custom CSS for a kid-friendly theme
+    st.markdown(
+        """
+        <style>
+        body {
+            background: linear-gradient(to bottom, #f3c6f1, #c6e3f3);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6f61;
+        }
+        .title {
+            color: #ff6f61;
+            font-size: 3em;
+            text-shadow: 2px 2px #ffa07a;
+        }
+        .story-box {
+            background-color: #ffe4e1;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+        }
+        .button {
+            background-color: #f5b7b1;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #f1948a;
+            transform: scale(1.1);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # Input controls
-    theme = st.text_input("Story Theme", "garden adventure")
-    age_range = st.selectbox("Age Range", ["3-5", "6-8", "9-11"])
-    learning_style = st.selectbox("Learning Style", ["Visual", "Auditory", "Kinesthetic"])
+    # Title with animation
+    st.markdown("<h1 class='title'>✨ Magic Story Creator 🐉</h1>", unsafe_allow_html=True)
 
-    # Fetch available voices (excluding Bella)
-    try:
-        voices = [voice.name for voice in elevenlabs_client.voices if voice.name.lower() != "bella"]
-    except Exception as e:
-        st.error(f"Error fetching voices: {e}")
-        voices = ["Rachel"]  # Fallback to a default voice
+    # Input section
+    theme = st.text_input("What's the theme of your story? 🧙 (e.g., dragons, space, candy land)", "Dragons")
+    age_range = st.selectbox("How old are the kids? 🧒", ["3-5", "6-8", "9-11"])
+    learning_style = st.selectbox("Learning Style 🎨", ["Visual", "Auditory", "Kinesthetic"])
 
-    voice = st.selectbox("Select Voice for Narration", voices)
+    if st.button("🌈 Create My Story!"):
+        with st.spinner("🌟 Crafting your magical tale..."):
+            # Generate story and assets
+            story_package = create_adaptive_story(theme, age_range, learning_style)
 
-    if st.button("Generate Story"):
-        with st.spinner("Creating your story..."):
-            story_package = create_adaptive_story(theme, age_range, learning_style, voice)
+        # Display results
+        st.markdown("<h2 style='color: #ffa07a;'>📖 Your Magical Adventure:</h2>", unsafe_allow_html=True)
+        st.markdown(f"<div class='story-box'>{story_package['text']}</div>", unsafe_allow_html=True)
 
-        st.write("### Your Story")
-        st.write(story_package["text"])
-
-        st.write("### Illustration")
+        st.markdown("<h3 style='color: #98fb98;'>🎨 Illustration:</h3>", unsafe_allow_html=True)
         if story_package["image"]:
-            st.image(story_package["image"], caption="A magical scene from your story", use_container_width=True)
+            st.image(story_package["image"], caption="A magical scene from your story", use_column_width=True)
+            st.markdown(f"<a href='{story_package['image']}' download='story_image.png'>📥 Download Image</a>", unsafe_allow_html=True)
+        else:
+            st.error("Image could not be generated. Please try again.")
 
-        st.write("### Audio Narration")
+        st.markdown("<h3 style='color: #ffb6c1;'>🎧 Listen to Your Story:</h3>", unsafe_allow_html=True)
         if story_package["audio"]:
             st.audio(story_package["audio"])
 
-
-# Entry Point
+# Entry point
 if __name__ == "__main__":
     create_web_interface()
