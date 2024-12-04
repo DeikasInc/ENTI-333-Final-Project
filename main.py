@@ -7,8 +7,8 @@ import time
 import os
 
 # Set API Keys
-openai.api_key = "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"  # Replace with your OpenAI API key
-elevenlabs_client = ElevenLabs(api_key="sk_c9bbdeb7ee4502ffe54f997529c49b67c9a69cf998cd8c80") 
+openai.api_key = "API-key"  # Replace with your OpenAI API key
+elevenlabs_client = ElevenLabs(api_key="YOUR-API-Key") 
 # 1. Story Generation System
 image_dir = "generated_images"
 os.makedirs(image_dir, exist_ok=True)
@@ -17,13 +17,60 @@ os.makedirs(image_dir, exist_ok=True)
 def generate_base_story(theme, age_range, learning_style):
     """Generate the initial story with adaptable elements."""
     prompt = f"""
-    Create a children's story based on the theme: {theme}.  
+    Roleplay Instruction: 
+You are an expert children’s storyteller and educator specializing in creating engaging, age-appropriate, and neurodivergent-friendly stories. Your mission is to craft captivating tales that meet the unique learning needs of children with diverse learning styles, particularly those who benefit from alternative educational methods. 
 
-    Tailor the story for the selected age group: {age_range}. 
+These stories must integrate multiple modes of representation—text, visual descriptions, audio cues, and interactive elements—to enhance comprehension and engagement. Additionally, the stories should use bold text for emphasis and phonetic spelling for challenging words to support language development. 
 
-    Customize the story for the chosen learning style: {learning_style}. 
+Shape 
 
-    Ensure the story includes a clear moral or learning outcome to foster both entertainment and education.
+Input Structure: 
+
+Story Theme: {theme}
+
+Age Range: {age_range}
+
+Learning Style: {learning_style}
+
+Shape 
+
+Instructions to the LLM: 
+
+Understand the Audience: 
+
+Adjust the story's language, sentence complexity, and narrative depth to suit the inputted age range. 
+
+Incorporate predictable patterns and structured sequences, especially for children with learning difficulties, to foster familiarity and comfort. 
+
+Incorporate Representation Variability: 
+
+Auditory: Suggest sound-based elements (e.g., “Imagine the soft ‘whoosh’ [wuh-sh] of the wind through the trees”). 
+
+Interactive: Add moments for child participation, such as “What do you think happens next?” or “Can you pretend to jump like a frog?” 
+
+Kinesthetic: Embed tactile or movement-related prompts (e.g., “Pretend you are holding a soft, fluffy bunny”). 
+
+Text-based: Provide clear, structured narratives with bolded key words and phonetic spelling for difficult words. 
+
+Use Emphasized Text: 
+
+Highlight important words in bold to aid focus and comprehension. For instance, use "big," "happy," or "roar." 
+
+Phonetically spell out challenging or unfamiliar words in brackets, e.g., "adventure (ad-ven-chur)" or "magnificent (mag-nif-uh-sent)." 
+
+Personalization: 
+
+Align the story’s tone and pacing with the learning style and age range to support individual needs. 
+
+Offer sensory-friendly options, ensuring illustrations, sounds, or interactions are non-overwhelming. 
+
+Align with the Theme: 
+
+Create a story with a clear connection to the given theme and a positive, affirming resolution. 
+
+End with a Call to Action: 
+
+Include an engaging question or prompt at the end of the story to encourage reflection or continued exploration
     """
     response = openai.ChatCompletion.create(
         model="gpt-4",
@@ -162,12 +209,6 @@ def create_web_interface():
         st.markdown("<h2 style='color: #ffa07a;'>📖 Your Magical Adventure:</h2>", unsafe_allow_html=True)
         st.markdown(f"<div class='story-box'>{story_package['text']}</div>", unsafe_allow_html=True)
 
-        st.markdown("<h3 style='color: #98fb98;'>🎨 Illustration:</h3>", unsafe_allow_html=True)
-        if story_package["image"]:
-            st.image(story_package["image"], caption="A magical scene from your story", use_column_width=True)
-            st.markdown(f"<a href='{story_package['image']}' download='story_image.png'>📥 Download Image</a>", unsafe_allow_html=True)
-        else:
-            st.error("Image could not be generated. Please try again.")
 
         st.markdown("<h3 style='color: #ffb6c1;'>🎧 Listen to Your Story:</h3>", unsafe_allow_html=True)
         if story_package["audio"]:
